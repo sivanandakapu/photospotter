@@ -1,0 +1,31 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "dynamodb:CreateTable",
+                "dynamodb:DeleteTable",
+                "dynamodb:ListTables",
+                "dynamodb:DescribeTable",
+                "dynamodb:PutItem",
+                "dynamodb:GetItem",
+                "dynamodb:UpdateItem",
+                "dynamodb:DeleteItem",
+                "dynamodb:BatchGetItem",
+                "dynamodb:BatchWriteItem",
+                "dynamodb:Query",
+                "dynamodb:Scan"
+            ],
+            "Resource": [
+                "arn:aws:dynamodb:us-east-2:350709789700:table/PhotoSpotterEvents",
+                "arn:aws:dynamodb:us-east-2:350709789700:table/PhotoSpotterGuests",
+                "arn:aws:dynamodb:us-east-2:350709789700:table/PhotoSpotterPhotos",
+                "arn:aws:dynamodb:us-east-2:350709789700:table/PhotoSpotterPhotoMatches",
+                "arn:aws:dynamodb:us-east-2:350709789700:table/PhotoSpotterGuests/index/*",
+                "arn:aws:dynamodb:us-east-2:350709789700:table/PhotoSpotterPhotos/index/*",
+                "arn:aws:dynamodb:us-east-2:350709789700:table/PhotoSpotterPhotoMatches/index/*"
+            ]
+        }
+    ]
+} 

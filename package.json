@@ -1,0 +1,51 @@
+{
+  "name": "photo-spotter",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.817.0",
+    "@aws-sdk/client-rekognition": "^3.817.0",
+    "@aws-sdk/client-s3": "^3.820.0",
+    "@aws-sdk/lib-dynamodb": "^3.817.0",
+    "@aws-sdk/s3-request-presigner": "^3.451.0",
+    "@prisma/client": "^5.6.0",
+    "@types/react-webcam": "^1.1.0",
+    "autoprefixer": "^10.4.16",
+    "aws-sdk": "^2.1499.0",
+    "axios": "^1.6.2",
+    "next": "^14.0.3",
+    "next-auth": "^4.24.11",
+    "postcss": "^8.4.31",
+    "prisma": "^5.6.0",
+    "qrcode": "^1.5.3",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-dropzone": "^14.3.8",
+    "react-qr-reader": "^3.0.0-beta-1",
+    "react-webcam": "^7.2.0",
+    "sharp": "^0.34.2",
+    "tailwindcss": "^3.3.5",
+    "twilio": "^4.19.0",
+    "uuid": "^9.0.1",
+    "zod": "^3.25.41"
+  },
+  "devDependencies": {
+    "@types/node": "^20.17.54",
+    "@types/react": "^18.3.23",
+    "@types/react-dom": "^18.3.7",
+    "@types/uuid": "^9.0.7",
+    "eslint": "^8.53.0",
+    "eslint-config-next": "^14.0.3",
+    "typescript": "^5.8.3"
+  }
+}
