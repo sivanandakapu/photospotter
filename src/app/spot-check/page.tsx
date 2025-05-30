@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
+import Image from 'next/image';
 
 interface Guest {
   id: string;
@@ -21,10 +22,10 @@ interface PhotoMatch {
   photoId: string;
   guestId: string;
   confidence: number;
-  photo?: Photo;
+  photo: Photo;
 }
 
-export default function SpotCheck() {
+export default function SpotCheckPage() {
   const [events, setEvents] = useState<Array<{ id: string; name: string }>>([]);
   const [selectedEventId, setSelectedEventId] = useState('');
   const [guests, setGuests] = useState<Guest[]>([]);
@@ -32,9 +33,11 @@ export default function SpotCheck() {
   const [matches, setMatches] = useState<PhotoMatch[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>('');
+  const [success, setSuccess] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Fetch events when component mounts
-  useEffect(() => {
+  React.useEffect(() => {
     const baseUrl = window.location.origin;
     console.log('Fetching events from:', `${baseUrl}/api/events`);
     fetch(`${baseUrl}/api/events`)
@@ -50,7 +53,7 @@ export default function SpotCheck() {
   }, []);
 
   // Fetch guests when event is selected
-  useEffect(() => {
+  React.useEffect(() => {
     if (selectedEventId) {
       const baseUrl = window.location.origin;
       console.log('Fetching guests for event:', selectedEventId);
@@ -80,7 +83,7 @@ export default function SpotCheck() {
   }, [selectedEventId]);
 
   // Fetch matches when guest is selected
-  useEffect(() => {
+  React.useEffect(() => {
     if (selectedGuest) {
       setLoading(true);
       const baseUrl = window.location.origin;
@@ -112,93 +115,150 @@ export default function SpotCheck() {
     }
   }, [selectedGuest]);
 
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    setSuccess('');
+    setMatches([]);
+
+    const formData = new FormData(e.currentTarget);
+    const photo = formData.get('photo');
+
+    if (!photo || !(photo instanceof File)) {
+      setError('Please select a photo');
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const data = new FormData();
+      data.append('photo', photo);
+
+      const response = await fetch('/api/matches', {
+        method: 'POST',
+        body: data,
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to find matches');
+      }
+
+      const matchesData = await response.json();
+      setMatches(matchesData);
+      setSuccess(
+        matchesData.length > 0
+          ? `Found ${matchesData.length} matching ${matchesData.length === 1 ? 'photo' : 'photos'}!`
+          : 'No matching photos found.'
+      );
+
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    } catch (err) {
+      setError('Failed to process photo');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-3xl font-bold mb-6">Spot Check</h1>
+    <div className="space-y-8">
+      <div className="text-center mb-12">
+        <h1 className="text-4xl font-bold mb-4">Spot Check</h1>
+        <p className="text-xl text-muted">Find your photos from events using facial recognition.</p>
+      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-1">
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Select Event
-            </label>
-            <select
-              value={selectedEventId}
-              onChange={(e) => setSelectedEventId(e.target.value)}
-              className="w-full p-2 border rounded-md"
-            >
-              <option value="">Select an event...</option>
-              {events.map(event => (
-                <option key={event.id} value={event.id}>
-                  {event.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {selectedEventId && (
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Select Guest
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Upload Form */}
+        <div className="card">
+          <h2 className="text-2xl font-bold mb-6">Upload Your Photo</h2>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label htmlFor="photo" className="block text-sm font-medium mb-2">
+                Select a Photo
               </label>
-              <select
-                value={selectedGuest?.id || ''}
-                onChange={(e) => {
-                  const guest = guests.find(g => g.id === e.target.value);
-                  setSelectedGuest(guest || null);
-                }}
-                className="w-full p-2 border rounded-md"
-              >
-                <option value="">Select a guest...</option>
-                {guests.map(guest => (
-                  <option key={guest.id} value={guest.id}>
-                    {guest.name} ({guest.email})
-                  </option>
-                ))}
-              </select>
+              <input
+                type="file"
+                name="photo"
+                id="photo"
+                accept="image/*"
+                required
+                ref={fileInputRef}
+                className="input file:mr-4 file:py-2 file:px-4 file:border-0 file:text-sm file:font-medium file:bg-primary file:text-white hover:file:bg-primary-dark"
+              />
+              <p className="text-muted text-sm mt-2">
+                Upload a clear photo of your face to find matching event photos
+              </p>
+            </div>
+            <button
+              type="submit"
+              className="button button-primary w-full mt-6"
+              disabled={loading}
+            >
+              {loading ? 'Searching...' : 'Find My Photos'}
+            </button>
+          </form>
+
+          {error && (
+            <div className="mt-4 p-4 bg-red-50 border border-red-200 text-error rounded-lg">
+              {error}
             </div>
           )}
 
-          {selectedGuest && (
-            <div className="border rounded-lg p-3">
-              <h2 className="text-lg font-semibold mb-2">Guest Selfie</h2>
-              <div className="relative pt-[100%]">
-                <img
-                  src={selectedGuest.selfieUrl.split('#')[0]}
-                  alt={`${selectedGuest.name}'s selfie`}
-                  className="absolute inset-0 w-full h-full object-cover rounded-lg"
-                />
-              </div>
+          {success && (
+            <div className="mt-4 p-4 bg-green-50 border border-green-200 text-success rounded-lg">
+              {success}
             </div>
           )}
         </div>
 
-        <div className="lg:col-span-2">
-          {loading ? (
-            <div className="text-center py-4">Loading matches...</div>
-          ) : matches.length > 0 ? (
-            <div className="w-full">
-              <h2 className="text-lg font-semibold mb-2">Matched Photos ({matches.length})</h2>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
-                {matches.map(match => match.photo && (
-                  <div key={match.id} className="relative bg-gray-100 rounded-lg overflow-hidden">
-                    <div className="aspect-square">
-                      <img
-                        src={match.photo.url}
-                        alt="Matched photo"
-                        className="absolute inset-0 w-full h-full object-cover"
-                      />
-                    </div>
-                    <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs p-1">
-                      {Math.round(match.confidence)}% match
+        {/* Matched Photos */}
+        <div className="card">
+          <h2 className="text-2xl font-bold mb-6">Your Photos</h2>
+          <div className="space-y-6">
+            {loading ? (
+              <div className="text-center py-8">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+                <p className="text-muted mt-4">Searching for your photos...</p>
+              </div>
+            ) : matches.length === 0 ? (
+              <div className="text-center py-8">
+                <p className="text-muted">
+                  {success || 'Upload a photo to start searching'}
+                </p>
+              </div>
+            ) : (
+              matches.map((match) => (
+                <div key={match.id} className="border border-border rounded-lg overflow-hidden">
+                  <div className="relative aspect-video">
+                    <Image
+                      src={match.photo.url}
+                      alt="Matched photo"
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
+                  <div className="p-4">
+                    <div className="flex justify-between items-center">
+                      <p className="text-sm text-muted">
+                        Match Confidence: {Math.round(match.confidence)}%
+                      </p>
+                      <a
+                        href={match.photo.url}
+                        download
+                        className="button button-secondary text-sm"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        Download
+                      </a>
                     </div>
                   </div>
-                ))}
-              </div>
-            </div>
-          ) : (
-            <div className="text-center py-4 text-gray-500">No matches found</div>
-          )}
+                </div>
+              ))
+            )}
+          </div>
         </div>
       </div>
     </div>

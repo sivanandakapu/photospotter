@@ -31,35 +31,33 @@ server {
 }
 EOF
 
-# Enable the site
-sudo ln -s /etc/nginx/sites-available/photo-spotter /etc/nginx/sites-enabled/
-sudo rm /etc/nginx/sites-enabled/default
+# Enable the site and remove default
+sudo ln -sf /etc/nginx/sites-available/photo-spotter /etc/nginx/sites-enabled/
+sudo rm -f /etc/nginx/sites-enabled/default
 
 # Test Nginx configuration
 sudo nginx -t
 
-# Restart Nginx
-sudo systemctl restart nginx
-
 # Clone the repository
+cd /home/ubuntu
+sudo rm -rf photospotter
 git clone https://github.com/sivanandakapu/photospotter.git
 cd photospotter
 
-# Install dependencies
-npm install
+# Install dependencies with legacy peer deps
+sudo npm install --legacy-peer-deps
+
+# Install Next.js globally
+sudo npm install -g next
 
 # Build the application
-npm run build
-
-# Create .env file with necessary environment variables
-cat > .env << EOF
-# Add your environment variables here
-NEXT_PUBLIC_API_URL=http://3.16.43.211
-EOF
+sudo npm run build
 
 # Start the application with PM2
-pm2 start npm --name "photo-spotter" -- start
+sudo pm2 delete photo-spotter || true
+sudo pm2 start npm --name "photo-spotter" -- start
+sudo pm2 save
+sudo pm2 startup systemd
 
-# Save PM2 process list and configure to start on system startup
-pm2 save
-sudo pm2 startup 
+# Restart Nginx
+sudo systemctl restart nginx 

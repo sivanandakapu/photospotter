@@ -2,158 +2,192 @@
 
 import React, { useState, useRef } from 'react';
 import { useParams } from 'next/navigation';
-import Webcam from 'react-webcam';
+import Image from 'next/image';
 
-export default function GuestRegistration() {
+interface Guest {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  photoUrl: string;
+}
+
+export default function GuestRegistrationPage() {
   const { eventId } = useParams();
-  const webcamRef = useRef<Webcam>(null);
-  const [selfieImage, setSelfieImage] = useState<string | null>(null);
+  const [guests, setGuests] = useState<Guest[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState(false);
+  const [success, setSuccess] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const captureSelfie = () => {
-    const imageSrc = webcamRef.current?.getScreenshot();
-    if (imageSrc) {
-      setSelfieImage(imageSrc);
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const registerGuest = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
     setError('');
+    setSuccess('');
 
-    const form = e.currentTarget;
-    const formData = new FormData(form);
+    const formData = new FormData(e.currentTarget);
+    const name = formData.get('name');
+    const email = formData.get('email');
+    const phone = formData.get('phone');
+    const photo = formData.get('photo');
 
-    if (!selfieImage) {
-      setError('Please take a selfie');
+    if (!photo || !(photo instanceof File)) {
+      setError('Please select a photo');
       setLoading(false);
       return;
     }
 
-    // Convert base64 selfie to blob
-    const response = await fetch(selfieImage);
-    const blob = await response.blob();
-    formData.append('selfie', blob, 'selfie.jpg');
-    formData.append('eventId', eventId as string);
-
     try {
-      const baseUrl = window.location.origin;
-      const response = await fetch(`${baseUrl}/api/guests`, {
+      const guestData = new FormData();
+      guestData.append('name', name as string);
+      guestData.append('email', email as string);
+      guestData.append('phone', phone as string);
+      guestData.append('photo', photo);
+      guestData.append('eventId', eventId as string);
+
+      const response = await fetch('/api/guests', {
         method: 'POST',
-        body: formData,
+        body: guestData,
       });
 
       if (!response.ok) {
-        throw new Error('Failed to register');
+        throw new Error('Failed to register guest');
       }
 
-      setSuccess(true);
-      form.reset();
-      setSelfieImage(null);
-    } catch (error) {
-      setError('Failed to register. Please try again.');
+      const newGuest = await response.json();
+      setGuests([...guests, newGuest]);
+      setSuccess('Guest registered successfully!');
+      ;(e.target as HTMLFormElement).reset();
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    } catch (err) {
+      setError('Failed to register guest');
     } finally {
       setLoading(false);
     }
   };
 
-  if (success) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="bg-green-50 p-6 rounded-lg shadow-md text-center">
-          <h2 className="text-2xl font-semibold text-green-800 mb-4">Registration Successful!</h2>
-          <p className="text-green-700">
-            You have been registered for the event. You will receive SMS notifications when photos of you are uploaded.
-          </p>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-4xl font-bold mb-8">Guest Registration</h1>
+    <div className="space-y-8">
+      <div className="text-center mb-12">
+        <h1 className="text-4xl font-bold mb-4">Guest Registration</h1>
+        <p className="text-xl text-muted">Register guests for facial recognition photo matching.</p>
+      </div>
 
-      <div className="max-w-2xl mx-auto bg-white p-6 rounded-lg shadow-md">
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-              Full Name
-            </label>
-            <input
-              type="text"
-              name="name"
-              id="name"
-              required
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-              Email
-            </label>
-            <input
-              type="email"
-              name="email"
-              id="email"
-              required
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
-              Phone Number
-            </label>
-            <input
-              type="tel"
-              name="phone"
-              id="phone"
-              required
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Take a Selfie
-            </label>
-            <div className="relative">
-              {!selfieImage ? (
-                <Webcam
-                  ref={webcamRef}
-                  screenshotFormat="image/jpeg"
-                  className="w-full rounded-lg"
-                />
-              ) : (
-                <img src={selfieImage} alt="Selfie preview" className="w-full rounded-lg" />
-              )}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Registration Form */}
+        <div className="card">
+          <h2 className="text-2xl font-bold mb-6">Register New Guest</h2>
+          <form onSubmit={registerGuest} className="space-y-4">
+            <div>
+              <label htmlFor="name" className="block text-sm font-medium mb-2">
+                Guest Name
+              </label>
+              <input
+                type="text"
+                name="name"
+                id="name"
+                required
+                className="input"
+                placeholder="Enter guest name"
+              />
+            </div>
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium mb-2">
+                Email Address
+              </label>
+              <input
+                type="email"
+                name="email"
+                id="email"
+                required
+                className="input"
+                placeholder="Enter email address"
+              />
+            </div>
+            <div>
+              <label htmlFor="phone" className="block text-sm font-medium mb-2">
+                Phone Number
+              </label>
+              <input
+                type="tel"
+                name="phone"
+                id="phone"
+                required
+                className="input"
+                placeholder="Enter phone number"
+              />
+            </div>
+            <div>
+              <label htmlFor="photo" className="block text-sm font-medium mb-2">
+                Guest Photo
+              </label>
+              <input
+                type="file"
+                name="photo"
+                id="photo"
+                accept="image/*"
+                required
+                ref={fileInputRef}
+                className="input file:mr-4 file:py-2 file:px-4 file:border-0 file:text-sm file:font-medium file:bg-primary file:text-white hover:file:bg-primary-dark"
+              />
+              <p className="text-muted text-sm mt-2">
+                Please upload a clear photo of the guest's face
+              </p>
             </div>
             <button
-              type="button"
-              onClick={selfieImage ? () => setSelfieImage(null) : captureSelfie}
-              className="mt-2 inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              type="submit"
+              className="button button-primary w-full mt-6"
+              disabled={loading}
             >
-              {selfieImage ? 'Retake Selfie' : 'Capture Selfie'}
+              {loading ? 'Registering...' : 'Register Guest'}
             </button>
-          </div>
+          </form>
 
           {error && (
-            <div className="text-red-600 text-sm">{error}</div>
+            <div className="mt-4 p-4 bg-red-50 border border-red-200 text-error rounded-lg">
+              {error}
+            </div>
           )}
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50"
-          >
-            {loading ? 'Registering...' : 'Register'}
-          </button>
-        </form>
+          {success && (
+            <div className="mt-4 p-4 bg-green-50 border border-green-200 text-success rounded-lg">
+              {success}
+            </div>
+          )}
+        </div>
+
+        {/* Registered Guests */}
+        <div className="card">
+          <h2 className="text-2xl font-bold mb-6">Registered Guests</h2>
+          <div className="space-y-4">
+            {guests.length === 0 ? (
+              <p className="text-muted text-center py-8">
+                No guests registered yet. Register your first guest!
+              </p>
+            ) : (
+              guests.map((guest) => (
+                <div key={guest.id} className="flex items-center gap-4 p-4 border border-border rounded-lg">
+                  <div className="relative w-16 h-16 rounded-full overflow-hidden">
+                    <Image
+                      src={guest.photoUrl}
+                      alt={guest.name}
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
+                  <div>
+                    <h3 className="font-bold">{guest.name}</h3>
+                    <p className="text-muted text-sm">{guest.email}</p>
+                    <p className="text-muted text-sm">{guest.phone}</p>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
