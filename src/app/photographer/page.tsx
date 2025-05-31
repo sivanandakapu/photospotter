@@ -22,6 +22,7 @@ export default function PhotographerPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [uploadProgress, setUploadProgress] = useState<number[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   React.useEffect(() => {
@@ -60,29 +61,54 @@ export default function PhotographerPage() {
     }
 
     try {
-      const uploadPromises = Array.from(files).map(async (file) => {
+      // Initialize progress array
+      setUploadProgress(new Array(files.length).fill(0));
+
+      const uploadPromises = Array.from(files).map(async (file, index) => {
         const photoData = new FormData();
         photoData.append('photo', file);
         photoData.append('eventId', selectedEvent);
 
-        const response = await fetch('/api/photos', {
-          method: 'POST',
-          body: photoData,
+        const xhr = new XMLHttpRequest();
+        
+        // Track upload progress
+        xhr.upload.onprogress = (event) => {
+          if (event.lengthComputable) {
+            const progress = Math.round((event.loaded * 100) / event.total);
+            setUploadProgress(prev => {
+              const newProgress = [...prev];
+              newProgress[index] = progress;
+              return newProgress;
+            });
+          }
+        };
+
+        // Create a promise for the XHR request
+        const uploadPromise = new Promise((resolve, reject) => {
+          xhr.onload = () => {
+            if (xhr.status === 201) {
+              resolve(JSON.parse(xhr.responseText));
+            } else {
+              reject(new Error('Upload failed'));
+            }
+          };
+          xhr.onerror = () => reject(new Error('Upload failed'));
         });
 
-        if (!response.ok) {
-          throw new Error('Failed to upload photo');
-        }
+        // Send the request
+        xhr.open('POST', '/api/photos', true);
+        xhr.send(photoData);
 
-        return response.json();
+        return uploadPromise;
       });
 
       const newPhotos = await Promise.all(uploadPromises);
-      setUploadedPhotos([...uploadedPhotos, ...newPhotos]);
+      setUploadedPhotos(prev => [...newPhotos.map(p => p as UploadedPhoto), ...prev]);
       setSuccess('Photos uploaded successfully!');
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
+      setUploadProgress([]);
     } catch (err) {
       setError('Failed to upload photos');
     } finally {
@@ -140,6 +166,27 @@ export default function PhotographerPage() {
                 You can select multiple photos to upload at once
               </p>
             </div>
+
+            {/* Upload Progress */}
+            {uploadProgress.length > 0 && (
+              <div className="space-y-2">
+                {uploadProgress.map((progress, index) => (
+                  <div key={index} className="space-y-1">
+                    <div className="flex justify-between text-sm">
+                      <span>Photo {index + 1}</span>
+                      <span>{progress}%</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div
+                        className="bg-primary h-2 rounded-full transition-all duration-300"
+                        style={{ width: `${progress}%` }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
             <button
               type="submit"
               className="button button-primary w-full mt-6"
@@ -173,12 +220,15 @@ export default function PhotographerPage() {
             ) : (
               uploadedPhotos.map((photo) => (
                 <div key={photo.id} className="relative aspect-square rounded-lg overflow-hidden">
-                  <Image
-                    src={photo.url}
-                    alt="Uploaded photo"
-                    fill
-                    className="object-cover hover:scale-105 transition-transform"
-                  />
+                  {photo.url && (
+                    <Image
+                      src={photo.url}
+                      alt="Uploaded photo"
+                      fill
+                      className="object-cover hover:scale-105 transition-transform"
+                      unoptimized
+                    />
+                  )}
                 </div>
               ))
             )}
