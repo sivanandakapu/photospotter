@@ -95,9 +95,13 @@ export async function POST(request: Request) {
     // Wait a bit to ensure indexing is complete
     await wait(1000);
 
+    // Return the complete photo object
     return NextResponse.json({ 
-      photo,
-      faceId
+      photo: {
+        id: photo.id,
+        url: photo.url,
+        eventId: photo.eventId
+      }
     }, { status: 201 });
   } catch (error) {
     console.error('Error uploading photo:', error);

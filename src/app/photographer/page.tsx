@@ -29,6 +29,12 @@ export default function PhotographerPage() {
     fetchEvents();
   }, []);
 
+  React.useEffect(() => {
+    if (selectedEvent) {
+      fetchEventPhotos();
+    }
+  }, [selectedEvent]);
+
   const fetchEvents = async () => {
     try {
       const response = await fetch('/api/events');
@@ -36,6 +42,16 @@ export default function PhotographerPage() {
       setEvents(data);
     } catch (err) {
       setError('Failed to load events');
+    }
+  };
+
+  const fetchEventPhotos = async () => {
+    try {
+      const response = await fetch(`/api/photos?eventId=${selectedEvent}`);
+      const photos = await response.json();
+      setUploadedPhotos(photos);
+    } catch (err) {
+      setError('Failed to load photos');
     }
   };
 
@@ -84,10 +100,11 @@ export default function PhotographerPage() {
         };
 
         // Create a promise for the XHR request
-        const uploadPromise = new Promise((resolve, reject) => {
+        const uploadPromise = new Promise<UploadedPhoto>((resolve, reject) => {
           xhr.onload = () => {
             if (xhr.status === 201) {
-              resolve(JSON.parse(xhr.responseText));
+              const response = JSON.parse(xhr.responseText);
+              resolve(response.photo); // Extract the photo object from the response
             } else {
               reject(new Error('Upload failed'));
             }
@@ -103,12 +120,15 @@ export default function PhotographerPage() {
       });
 
       const newPhotos = await Promise.all(uploadPromises);
-      setUploadedPhotos(prev => [...newPhotos.map(p => p as UploadedPhoto), ...prev]);
+      setUploadedPhotos(prev => [...newPhotos, ...prev]);
       setSuccess('Photos uploaded successfully!');
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
       setUploadProgress([]);
+      
+      // Fetch updated photos after successful upload
+      await fetchEventPhotos();
     } catch (err) {
       setError('Failed to upload photos');
     } finally {
@@ -176,9 +196,9 @@ export default function PhotographerPage() {
                       <span>Photo {index + 1}</span>
                       <span>{progress}%</span>
                     </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div className="w-full bg-gray-100 rounded-full h-2.5 dark:bg-gray-200">
                       <div
-                        className="bg-primary h-2 rounded-full transition-all duration-300"
+                        className="bg-green-500 h-2.5 rounded-full transition-all duration-300 ease-in-out"
                         style={{ width: `${progress}%` }}
                       />
                     </div>

@@ -1,11 +1,24 @@
 #!/bin/bash
 
-# Push changes to GitHub
-git add .
-git commit -m "Update: $1"
-git push origin main
+echo "Starting update process..."
 
-# Deploy to EC2
-ssh -i ~/Downloads/photo.pem ubuntu@3.16.43.211 'cd /home/ubuntu/photospotter && git pull && npm install && npm run build && pm2 restart photo-spotter --update-env'
+# Navigate to app directory
+cd /home/ubuntu/photospotter
 
-echo "Deployment completed! Changes are now live on EC2." 
+# Pull latest changes
+echo "Pulling latest changes..."
+git pull
+
+# Install dependencies
+echo "Installing dependencies..."
+npm install --legacy-peer-deps
+
+# Build the application
+echo "Building the application..."
+npm run build
+
+# Restart PM2
+echo "Restarting PM2..."
+pm2 restart all
+
+echo "Update completed!" 
