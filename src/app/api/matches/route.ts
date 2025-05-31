@@ -5,8 +5,9 @@ import {
   getPhoto,
   createPhotoMatch
 } from '@/lib/dynamodb';
-import { searchFaces } from '@/lib/aws';
+import { searchFaces, searchFacesByImage } from '@/lib/aws';
 import { validate as isUUID } from 'uuid';
+import { resizeImageForRekognition } from '@/lib/image';
 
 export async function GET(request: Request) {
   try {
@@ -139,6 +140,57 @@ export async function GET(request: Request) {
     console.error('Error fetching matches:', error);
     return NextResponse.json(
       { error: 'Failed to fetch matches' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function POST(request: Request) {
+  try {
+    const formData = await request.formData();
+    const photo = formData.get('photo') as File;
+
+    if (!photo) {
+      return NextResponse.json(
+        { error: 'Photo is required' },
+        { status: 400 }
+      );
+    }
+
+    // Convert photo to buffer and resize for Rekognition
+    const photoBuffer = Buffer.from(await photo.arrayBuffer());
+    const resizedBuffer = await resizeImageForRekognition(photoBuffer);
+
+    // Search for matching faces
+    const matches = await searchFacesByImage(resizedBuffer);
+    console.log('Found matches:', matches);
+
+    // Process matches
+    const processedMatches = [];
+    const processedPhotoIds = new Set();
+
+    for (const match of matches) {
+      if (!match.Face?.ExternalImageId) continue;
+      
+      const photoId = match.Face.ExternalImageId;
+      if (processedPhotoIds.has(photoId)) continue;
+      
+      const photo = await getPhoto(photoId);
+      if (!photo) continue;
+
+      processedPhotoIds.add(photoId);
+      processedMatches.push({
+        photoId,
+        photo,
+        confidence: match.Similarity || 0
+      });
+    }
+
+    return NextResponse.json(processedMatches);
+  } catch (error) {
+    console.error('Error processing photo match:', error);
+    return NextResponse.json(
+      { error: 'Failed to process photo match' },
       { status: 500 }
     );
   }
