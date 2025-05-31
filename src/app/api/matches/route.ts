@@ -3,7 +3,8 @@ import {
   getPhotoMatches, 
   getGuest,
   getPhoto,
-  createPhotoMatch
+  createPhotoMatch,
+  getEventPhotos
 } from '@/lib/dynamodb';
 import { searchFaces, searchFacesByImage } from '@/lib/aws';
 import { validate as isUUID } from 'uuid';
@@ -149,12 +150,19 @@ export async function POST(request: Request) {
   try {
     const formData = await request.formData();
     const photo = formData.get('photo') as File;
+    const eventId = formData.get('eventId') as string;
 
-    if (!photo) {
+    if (!photo || !eventId) {
       return NextResponse.json(
-        { error: 'Photo is required' },
+        { error: 'Photo and event ID are required' },
         { status: 400 }
       );
+    }
+
+    // Get all photos for this event first
+    const eventPhotos = await getEventPhotos(eventId);
+    if (!eventPhotos?.length) {
+      return NextResponse.json([]);
     }
 
     // Convert photo to buffer and resize for Rekognition
@@ -175,7 +183,8 @@ export async function POST(request: Request) {
       const photoId = match.Face.ExternalImageId;
       if (processedPhotoIds.has(photoId)) continue;
       
-      const photo = await getPhoto(photoId);
+      // Only include photos from this event
+      const photo = eventPhotos.find(p => p.id === photoId);
       if (!photo) continue;
 
       processedPhotoIds.add(photoId);
