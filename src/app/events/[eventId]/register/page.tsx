@@ -3,6 +3,7 @@
 import React, { useState, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import Image from 'next/image';
+import Webcam from 'react-webcam';
 
 interface Guest {
   id: string;
@@ -18,7 +19,35 @@ export default function GuestRegistrationPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [showCamera, setShowCamera] = useState(false);
+  const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const webcamRef = useRef<Webcam>(null);
+
+  const handleCapture = React.useCallback(() => {
+    if (webcamRef.current) {
+      const imageSrc = webcamRef.current.getScreenshot();
+      setCapturedImage(imageSrc);
+      setShowCamera(false);
+    }
+  }, [webcamRef]);
+
+  const handleRetake = () => {
+    setCapturedImage(null);
+    setShowCamera(true);
+  };
+
+  const dataURLtoFile = (dataurl: string, filename: string): File => {
+    const arr = dataurl.split(',');
+    const mime = arr[0].match(/:(.*?);/)![1];
+    const bstr = atob(arr[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+    while (n--) {
+      u8arr[n] = bstr.charCodeAt(n);
+    }
+    return new File([u8arr], filename, { type: mime });
+  };
 
   const registerGuest = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -30,10 +59,15 @@ export default function GuestRegistrationPage() {
     const name = formData.get('name');
     const email = formData.get('email');
     const phone = formData.get('phone');
-    const photo = formData.get('photo');
+    let photo = formData.get('photo');
+
+    // If we have a captured image from the camera, use that instead
+    if (capturedImage) {
+      photo = dataURLtoFile(capturedImage, 'selfie.jpg');
+    }
 
     if (!photo || !(photo instanceof File)) {
-      setError('Please select a photo');
+      setError('Please select a photo or take a selfie');
       setLoading(false);
       return;
     }
@@ -62,6 +96,7 @@ export default function GuestRegistrationPage() {
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
+      setCapturedImage(null);
     } catch (err) {
       setError('Failed to register guest');
     } finally {
@@ -121,20 +156,64 @@ export default function GuestRegistrationPage() {
               />
             </div>
             <div>
-              <label htmlFor="photo" className="block text-sm font-medium mb-2">
+              <label className="block text-sm font-medium mb-2">
                 Guest Photo
               </label>
-              <input
-                type="file"
-                name="photo"
-                id="photo"
-                accept="image/*"
-                required
-                ref={fileInputRef}
-                className="input file:mr-4 file:py-2 file:px-4 file:border-0 file:text-sm file:font-medium file:bg-primary file:text-white hover:file:bg-primary-dark"
-              />
+              {showCamera ? (
+                <div className="space-y-4">
+                  <Webcam
+                    ref={webcamRef}
+                    audio={false}
+                    screenshotFormat="image/jpeg"
+                    className="w-full rounded-lg"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleCapture}
+                    className="button button-secondary w-full"
+                  >
+                    Take Photo
+                  </button>
+                </div>
+              ) : capturedImage ? (
+                <div className="space-y-4">
+                  <div className="relative aspect-video">
+                    <Image
+                      src={capturedImage}
+                      alt="Captured photo"
+                      fill
+                      className="object-cover rounded-lg"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleRetake}
+                    className="button button-secondary w-full"
+                  >
+                    Retake Photo
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <input
+                    type="file"
+                    name="photo"
+                    id="photo"
+                    accept="image/*"
+                    ref={fileInputRef}
+                    className="input file:mr-4 file:py-2 file:px-4 file:border-0 file:text-sm file:font-medium file:bg-primary file:text-white hover:file:bg-primary-dark"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowCamera(true)}
+                    className="button button-secondary w-full"
+                  >
+                    Take Selfie
+                  </button>
+                </div>
+              )}
               <p className="text-muted text-sm mt-2">
-                Please upload a clear photo of the guest's face
+                Upload a photo or take a selfie
               </p>
             </div>
             <button
