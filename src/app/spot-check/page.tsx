@@ -3,6 +3,12 @@
 import React, { useState, useRef } from 'react';
 import Image from 'next/image';
 
+interface Event {
+  id: string;
+  name: string;
+  date: string;
+}
+
 interface Guest {
   id: string;
   name: string;
@@ -26,7 +32,7 @@ interface PhotoMatch {
 }
 
 export default function SpotCheckPage() {
-  const [events, setEvents] = useState<Array<{ id: string; name: string }>>([]);
+  const [events, setEvents] = useState<Event[]>([]);
   const [selectedEventId, setSelectedEventId] = useState('');
   const [guests, setGuests] = useState<Guest[]>([]);
   const [selectedGuest, setSelectedGuest] = useState<Guest | null>(null);
@@ -122,6 +128,12 @@ export default function SpotCheckPage() {
     setSuccess('');
     setMatches([]);
 
+    if (!selectedEventId) {
+      setError('Please select an event first');
+      setLoading(false);
+      return;
+    }
+
     const formData = new FormData(e.currentTarget);
     const photo = formData.get('photo');
 
@@ -134,6 +146,7 @@ export default function SpotCheckPage() {
     try {
       const data = new FormData();
       data.append('photo', photo);
+      data.append('eventId', selectedEventId);
 
       const response = await fetch('/api/matches', {
         method: 'POST',
@@ -149,7 +162,7 @@ export default function SpotCheckPage() {
       setSuccess(
         matchesData.length > 0
           ? `Found ${matchesData.length} matching ${matchesData.length === 1 ? 'photo' : 'photos'}!`
-          : 'No matching photos found.'
+          : 'No matching photos found in this event.'
       );
 
       if (fileInputRef.current) {
@@ -174,6 +187,25 @@ export default function SpotCheckPage() {
         <div className="card">
           <h2 className="text-2xl font-bold mb-6">Upload Your Photo</h2>
           <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label htmlFor="event" className="block text-sm font-medium mb-2">
+                Select Event
+              </label>
+              <select
+                id="event"
+                value={selectedEventId}
+                onChange={(e) => setSelectedEventId(e.target.value)}
+                required
+                className="input"
+              >
+                <option value="">Choose an event...</option>
+                {events.map((event) => (
+                  <option key={event.id} value={event.id}>
+                    {event.name} ({new Date(event.date).toLocaleDateString()})
+                  </option>
+                ))}
+              </select>
+            </div>
             <div>
               <label htmlFor="photo" className="block text-sm font-medium mb-2">
                 Select a Photo
