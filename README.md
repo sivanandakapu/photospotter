@@ -33,6 +33,9 @@ npm install
 AWS_ACCESS_KEY_ID=your_aws_access_key_id
 AWS_SECRET_ACCESS_KEY=your_aws_secret_access_key
 AWS_REGION=us-east-2
+COGNITO_CLIENT_ID=your_cognito_client_id
+COGNITO_CLIENT_SECRET=your_cognito_client_secret
+COGNITO_ISSUER=https://your-domain.auth.us-east-2.amazoncognito.com
 
 # S3 and CDN Configuration
 S3_BUCKET_ORIGINALS=photos--db
@@ -113,7 +116,11 @@ The application will be available at `http://localhost:3000`.
    - AmazonDynamoDBFullAccess
    - AmazonS3FullAccess
    - AmazonRekognitionFullAccess
-3. Configure CORS for the S3 bucket:
+3. Create a Cognito user pool and app client:
+   - Enable the Authorization Code grant flow
+   - Set callback URL to `http://localhost:3000/api/auth/callback/cognito`
+   - Note the user pool domain, client ID and client secret
+4. Configure CORS for the S3 bucket:
 ```json
 [
     {

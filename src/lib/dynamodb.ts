@@ -25,7 +25,7 @@ const PHOTO_FACES_TABLE = 'PhotoSpotterPhotoFaces';
 const PHOTO_MATCHES_TABLE = 'PhotoSpotterPhotoMatches';
 
 // Event functions
-export async function createEvent(data: { name: string; date: string }) {
+export async function createEvent(data: { name: string; date: string; ownerId: string }) {
   const event = {
     id: uuidv4(),
     ...data,
@@ -39,9 +39,13 @@ export async function createEvent(data: { name: string; date: string }) {
   return event;
 }
 
-export async function getEvents() {
+export async function getEvents(ownerId: string) {
   const result = await docClient.send(new ScanCommand({
     TableName: EVENTS_TABLE,
+    FilterExpression: 'ownerId = :ownerId',
+    ExpressionAttributeValues: {
+      ':ownerId': ownerId,
+    },
   }));
 
   return result.Items || [];

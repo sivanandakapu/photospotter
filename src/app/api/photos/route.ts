@@ -1,14 +1,16 @@
 import { NextResponse } from 'next/server';
 import { uploadToS3, searchFacesByImage, indexFaceInRekognition } from '@/lib/aws';
-import { 
-  createPhoto, 
+import {
+  createPhoto,
   getEventPhotos,
   createPhotoFace,
-  getEvent, 
-  getEventGuests 
+  getEvent,
+  getEventGuests
 } from '@/lib/dynamodb';
 import { resizeImageForRekognition } from '@/lib/image';
 import { v4 as uuidv4 } from 'uuid';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '../auth/[...nextauth]/route';
 
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 1000; // 1 second
@@ -19,6 +21,11 @@ async function wait(ms: number) {
 
 export async function POST(request: Request) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const formData = await request.formData();
     const photoFile = formData.get('photo') as File;
     const eventId = formData.get('eventId') as string;
@@ -30,6 +37,11 @@ export async function POST(request: Request) {
         { error: 'Photo and event ID are required' },
         { status: 400 }
       );
+    }
+
+    const event = await getEvent(eventId);
+    if (!event || (event as any).ownerId !== session.user.id) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
     const photoBuffer = Buffer.from(await photoFile.arrayBuffer());
@@ -114,6 +126,11 @@ export async function POST(request: Request) {
 
 export async function GET(request: Request) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { searchParams } = new URL(request.url);
     const eventId = searchParams.get('eventId');
 
@@ -122,6 +139,11 @@ export async function GET(request: Request) {
         { error: 'Event ID is required' },
         { status: 400 }
       );
+    }
+
+    const event = await getEvent(eventId);
+    if (!event || (event as any).ownerId !== session.user.id) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
     const photos = await getEventPhotos(eventId);
