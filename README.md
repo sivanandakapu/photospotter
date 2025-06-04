@@ -37,6 +37,11 @@ COGNITO_CLIENT_ID=your_cognito_client_id
 COGNITO_CLIENT_SECRET=your_cognito_client_secret
 COGNITO_ISSUER=https://your-domain.auth.us-east-2.amazoncognito.com
 
+NEXTAUTH_SECRET=your_nextauth_secret
+NEXTAUTH_URL=http://localhost:3000
+=======
+
+
 # S3 and CDN Configuration
 S3_BUCKET_ORIGINALS=photos--db
 REKOG_COLLECTION=event-spotter-collection
