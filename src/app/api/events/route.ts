@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createEvent, getEvents } from '@/lib/dynamodb';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '../auth/[...nextauth]/route';
 
 const EventSchema = z.object({
   name: z.string().min(1),
@@ -9,10 +11,15 @@ const EventSchema = z.object({
 
 export async function POST(request: Request) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const body = await request.json();
     const validatedData = EventSchema.parse(body);
 
-    const event = await createEvent(validatedData);
+    const event = await createEvent({ ...validatedData, ownerId: session.user.id });
 
     return NextResponse.json(event, { status: 201 });
   } catch (error) {
@@ -26,7 +33,12 @@ export async function POST(request: Request) {
 
 export async function GET() {
   try {
-    const events = await getEvents();
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const events = await getEvents(session.user.id);
 
     return NextResponse.json(events);
   } catch (error) {
