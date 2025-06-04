@@ -28,6 +28,12 @@ export default function SignIn() {
           </a>
         </p>
       </div>
+      <button
+        onClick={() => signIn('cognito', { callbackUrl })}
+        className="px-4 py-2 bg-indigo-600 text-white rounded"
+      >
+        Sign in with AWS Cognito
+      </button>
     </div>
   );
 }
