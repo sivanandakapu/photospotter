@@ -25,38 +25,31 @@ export default function NavBar() {
           </div>
         </a>
         <div className="flex items-center gap-8">
-          <a
-            href="/events"
-            className="text-secondary hover:text-primary relative py-2 transition-colors duration-200 after:content-[''] after:absolute after:left-0 after:bottom-0 after:h-0.5 after:w-0 after:bg-primary after:transition-all after:duration-300 hover:after:w-full"
-          >
-            Events
-          </a>
-          <a
-            href="/photographer"
-            className="text-secondary hover:text-primary relative py-2 transition-colors duration-200 after:content-[''] after:absolute after:left-0 after:bottom-0 after:h-0.5 after:w-0 after:bg-primary after:transition-all after:duration-300 hover:after:w-full"
-          >
-            Photographer
-          </a>
-          <a
-            href="/spot-check"
-            className="text-secondary hover:text-primary relative py-2 transition-colors duration-200 after:content-[''] after:absolute after:left-0 after:bottom-0 after:h-0.5 after:w-0 after:bg-primary after:transition-all after:duration-300 hover:after:w-full"
-          >
-            Spot Check
-          </a>
           {session ? (
-            <button
-              onClick={() => signOut({ callbackUrl: '/' })}
-              className="text-secondary hover:text-primary relative py-2 transition-colors duration-200"
-            >
-              Sign Out
-            </button>
+            <>
+              <span className="text-secondary">{session.user?.email}</span>
+              <button
+                onClick={() => signOut({ callbackUrl: '/' })}
+                className="text-secondary hover:text-primary relative py-2 transition-colors duration-200"
+              >
+                Sign Out
+              </button>
+            </>
           ) : (
-            <a
-              href="/auth/signin"
-              className="text-secondary hover:text-primary relative py-2 transition-colors duration-200"
-            >
-              Sign In
-            </a>
+            <>
+              <a
+                href="/auth/signin"
+                className="text-secondary hover:text-primary relative py-2 transition-colors duration-200"
+              >
+                Sign In
+              </a>
+              <a
+                href="/auth/signup"
+                className="text-secondary hover:text-primary relative py-2 transition-colors duration-200"
+              >
+                Sign Up
+              </a>
+            </>
           )}
         </div>
       </div>
