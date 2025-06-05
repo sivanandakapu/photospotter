@@ -2,7 +2,6 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { useSession } from 'next-auth/react';
 
 interface Event {
   id: string;
@@ -11,7 +10,6 @@ interface Event {
 }
 
 export default function Home() {
-  const { data: session } = useSession();
   const [events, setEvents] = useState<Event[]>([]);
   const [newEvent, setNewEvent] = useState<Event>({
     id: '',
@@ -76,22 +74,18 @@ export default function Home() {
           Make your events more memorable.
         </p>
         <div className="flex gap-4 justify-center">
-          {session && (
-            <>
-              <Link
-                href="/events"
-                className="button button-primary"
-              >
-                Create Event
-              </Link>
-              <Link
-                href="/spot-check"
-                className="button button-secondary"
-              >
-                Find Your Photos
-              </Link>
-            </>
-          )}
+          <Link 
+            href="/events" 
+            className="button button-primary"
+          >
+            Create Event
+          </Link>
+          <Link 
+            href="/spot-check" 
+            className="button button-secondary"
+          >
+            Find Your Photos
+          </Link>
         </div>
       </section>
 
