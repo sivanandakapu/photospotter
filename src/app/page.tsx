@@ -92,6 +92,31 @@ export default function Home() {
               </Link>
             </>
           )}
+        <div className="flex flex-wrap gap-4 justify-center">
+          <Link
+            href="/events"
+            className="button button-primary"
+          >
+            Create Event
+          </Link>
+          <Link
+            href="/spot-check"
+            className="button button-secondary"
+          >
+            Find Your Photos
+          </Link>
+          <Link
+            href="/auth/signin"
+            className="button button-secondary"
+          >
+            Sign In
+          </Link>
+          <Link
+            href="/auth/signup"
+            className="button button-secondary"
+          >
+            Sign Up
+          </Link>
         </div>
       </section>
 
