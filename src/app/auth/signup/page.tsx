@@ -21,9 +21,9 @@ export default function SignUp() {
         >
           Sign up with AWS Cognito
         </button>
-        <p className="text-center text-muted text-sm">
+        <p className="mt-4 text-center text-sm text-slate-400">
           Already have an account?{' '}
-          <a href="/auth/signin" className="text-primary hover:underline">
+          <a href="/auth/signin" className="text-indigo-400 hover:text-indigo-300 hover:underline">
             Sign In
           </a>
         </p>

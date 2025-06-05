@@ -76,7 +76,7 @@ export default function Home() {
           Make your events more memorable.
         </p>
         <div className="flex gap-4 justify-center">
-          {session && (
+          {session ? (
             <>
               <Link
                 href="/events"
@@ -91,32 +91,22 @@ export default function Home() {
                 Find Your Photos
               </Link>
             </>
+          ) : (
+            <>
+              <Link
+                href="/auth/signin"
+                className="button button-primary"
+              >
+                Sign In
+              </Link>
+              <Link
+                href="/auth/signup"
+                className="button button-primary"
+              >
+                Sign Up
+              </Link>
+            </>
           )}
-        <div className="flex flex-wrap gap-4 justify-center">
-          <Link
-            href="/events"
-            className="button button-primary"
-          >
-            Create Event
-          </Link>
-          <Link
-            href="/spot-check"
-            className="button button-secondary"
-          >
-            Find Your Photos
-          </Link>
-          <Link
-            href="/auth/signin"
-            className="button button-secondary"
-          >
-            Sign In
-          </Link>
-          <Link
-            href="/auth/signup"
-            className="button button-secondary"
-          >
-            Sign Up
-          </Link>
         </div>
       </section>
 
@@ -173,13 +163,13 @@ export default function Home() {
       <section className="text-center py-16 bg-card rounded-lg">
         <h2 className="text-3xl font-bold mb-4">Ready to Get Started?</h2>
         <p className="text-xl text-muted mb-8">
-          Create your first event and experience the magic of automated photo sharing.
+          Create your first event and experience the magic of automated photo sharing by Signing Up below.
         </p>
-        <Link 
-          href="/events" 
+        <Link
+          href="/auth/signup"
           className="button button-primary"
         >
-          Create Your Event
+          Sign Up
         </Link>
       </section>
     </div>

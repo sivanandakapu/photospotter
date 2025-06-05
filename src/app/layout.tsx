@@ -45,29 +45,6 @@ export default function RootLayout({
                 </div>
               </div>
               <div>
-                <h4 className="font-bold mb-4">Quick Links</h4>
-                <div className="flex flex-col gap-3">
-                  <a 
-                    href="/events" 
-                    className="text-secondary hover:text-primary transition-colors duration-200 w-fit"
-                  >
-                    Events
-                  </a>
-                  <a 
-                    href="/photographer" 
-                    className="text-secondary hover:text-primary transition-colors duration-200 w-fit"
-                  >
-                    Photographer
-                  </a>
-                  <a 
-                    href="/spot-check" 
-                    className="text-secondary hover:text-primary transition-colors duration-200 w-fit"
-                  >
-                    Spot Check
-                  </a>
-                </div>
-              </div>
-              <div>
                 <h4 className="font-bold mb-4">Contact</h4>
                 <p className="text-muted">Have questions? Get in touch with us.</p>
                 <a 
