@@ -90,6 +90,12 @@ export default function Home() {
               >
                 Find Your Photos
               </Link>
+              <Link
+                href="/photographer"
+                className="button button-secondary"
+              >
+                Upload Photos
+              </Link>
             </>
           ) : (
             <>
