@@ -12,11 +12,7 @@ import {
   ScanCommand, 
   DeleteCommand 
 } from '@aws-sdk/lib-dynamodb';
-import { 
-  RekognitionClient, 
-  DeleteFacesCommand,
-  ListFacesCommand
-} from '@aws-sdk/client-rekognition';
+import { deleteAllFacesFromCollection } from '@/lib/aws';
 
 const s3Client = new S3Client({
   region: process.env.AWS_REGION,
@@ -36,13 +32,6 @@ const dynamoClient = new DynamoDBClient({
 
 const docClient = DynamoDBDocumentClient.from(dynamoClient);
 
-const rekognitionClient = new RekognitionClient({
-  region: process.env.AWS_REGION,
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-  },
-});
 
 const TABLES = [
   'PhotoSpotterEvents',
@@ -78,23 +67,10 @@ export async function POST() {
     }
     console.log('S3 bucket cleaned');
 
-    // 2. Delete all faces from Rekognition collection
-    console.log('Cleaning Rekognition collection...');
-    const listFacesResponse = await rekognitionClient.send(
-      new ListFacesCommand({
-        CollectionId: process.env.REKOG_COLLECTION,
-      })
-    );
-
-    if (listFacesResponse.Faces && listFacesResponse.Faces.length > 0) {
-      await rekognitionClient.send(
-        new DeleteFacesCommand({
-          CollectionId: process.env.REKOG_COLLECTION,
-          FaceIds: listFacesResponse.Faces.map(face => face.FaceId!)
-        })
-      );
-    }
-    console.log('Rekognition collection cleaned');
+    // 2. Delete all stored face embeddings
+    console.log('Cleaning InsightFace data...');
+    await deleteAllFacesFromCollection();
+    console.log('InsightFace data cleaned');
 
     // 3. Delete all items from DynamoDB tables
     console.log('Cleaning DynamoDB tables...');

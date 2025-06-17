@@ -1,10 +1,9 @@
 import sharp from 'sharp';
 
-// Maximum size for AWS Rekognition is 5MB (5,242,880 bytes)
+// Maximum size for recognition processing is 5MB
 const MAX_SIZE = 5 * 1024 * 1024;
 
-export async function resizeImageForRekognition(buffer: Buffer): Promise<Buffer> {
-  // AWS Rekognition has specific requirements for input images
+export async function resizeImageForRecognition(buffer: Buffer): Promise<Buffer> {
   // Resize to a reasonable size while maintaining aspect ratio
   const resized = await sharp(buffer)
     .resize(1024, 1024, {

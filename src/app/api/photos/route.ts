@@ -7,7 +7,7 @@ import {
   getEvent,
   getEventGuests
 } from '@/lib/dynamodb';
-import { resizeImageForRekognition } from '@/lib/image';
+import { resizeImageForRecognition } from '@/lib/image';
 import { v4 as uuidv4 } from 'uuid';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../auth/[...nextauth]/route';
@@ -61,21 +61,21 @@ export async function POST(request: Request) {
     });
     console.log('POST /api/photos - Created photo record:', photo);
 
-    // Use the generated photo.id for Rekognition
-    const photoIdForRekognition = photo.id;
+    // Use the generated photo.id for the face index
+    const photoIdForIndexing = photo.id;
 
-    // Resize image for Rekognition
-    const resizedBuffer = await resizeImageForRekognition(photoBuffer);
-    console.log('POST /api/photos - Resized photo for Rekognition');
+    // Resize image for recognition
+    const resizedBuffer = await resizeImageForRecognition(photoBuffer);
+    console.log('POST /api/photos - Resized photo for recognition');
 
-    // Index face in Rekognition with retries
+    // Index face with retries
     let faceId = null;
     let retries = 0;
     
     while (retries < MAX_RETRIES && !faceId) {
       try {
-        console.log(`POST /api/photos - Indexing face in Rekognition (attempt ${retries + 1})...`);
-        faceId = await indexFaceInRekognition(resizedBuffer, photoIdForRekognition);
+        console.log(`POST /api/photos - Indexing face (attempt ${retries + 1})...`);
+        faceId = await indexFaceInRekognition(resizedBuffer, photoIdForIndexing);
         console.log('POST /api/photos - Got face ID:', faceId);
       } catch (error) {
         console.error(`POST /api/photos - Failed to index face (attempt ${retries + 1}):`, error);

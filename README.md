@@ -7,12 +7,12 @@ Photo Spotter is a web application that helps event photographers share photos w
 - Event creation and management
 - Guest registration with selfie capture
 - Photo upload with drag-and-drop support
-- Automatic face matching using AWS Rekognition
+- Automatic face matching using the InsightFace library
 
 ## Prerequisites
 
 - Node.js 18 or later
-- AWS account with DynamoDB, S3, and Rekognition access
+- AWS account with DynamoDB and S3 access
 
 ## Setup
 
@@ -44,7 +44,6 @@ NEXTAUTH_URL=http://localhost:3000
 
 # S3 and CDN Configuration
 S3_BUCKET_ORIGINALS=photos--db
-REKOG_COLLECTION=event-spotter-collection
 CDN_DOMAIN=d23qazmttrl3im.cloudfront.net
 ```
 
@@ -102,12 +101,7 @@ aws dynamodb create-table \
   --provisioned-throughput ReadCapacityUnits=5,WriteCapacityUnits=5
 ```
 
-5. Create the AWS Rekognition collection:
-```bash
-aws rekognition create-collection --collection-id "PhotoSpotterFaces" --region your_aws_region
-```
-
-6. Start the development server:
+5. Start the development server:
 ```bash
 npm run dev
 ```
@@ -120,7 +114,6 @@ The application will be available at `http://localhost:3000`.
 2. Create an IAM user with the following permissions:
    - AmazonDynamoDBFullAccess
    - AmazonS3FullAccess
-   - AmazonRekognitionFullAccess
 3. Create a Cognito user pool and app client:
    - Enable the Authorization Code grant flow
    - Set callback URL to `http://localhost:3000/api/auth/callback/cognito`
