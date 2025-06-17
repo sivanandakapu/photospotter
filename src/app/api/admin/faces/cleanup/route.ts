@@ -4,12 +4,12 @@ import { deleteAllFacesFromCollection } from '@/lib/aws';
 export async function POST() {
   try {
     await deleteAllFacesFromCollection();
-    return NextResponse.json({ message: 'Successfully cleaned up Rekognition collection' });
+    return NextResponse.json({ message: 'Successfully cleaned up InsightFace data' });
   } catch (error) {
-    console.error('Error cleaning up Rekognition collection:', error);
+    console.error('Error cleaning up InsightFace data:', error);
     return NextResponse.json(
-      { error: 'Failed to clean up Rekognition collection' },
+      { error: 'Failed to clean up InsightFace data' },
       { status: 500 }
     );
   }
-} 
+}

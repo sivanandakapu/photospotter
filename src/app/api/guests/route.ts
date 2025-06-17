@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { uploadToS3, indexFaceInRekognition } from '@/lib/aws';
 import { createGuest, getEventGuests } from '@/lib/dynamodb';
-import { resizeImageForRekognition } from '@/lib/image';
+import { resizeImageForRecognition } from '@/lib/image';
 
 const GuestSchema = z.object({
   name: z.string().min(1),
@@ -44,12 +44,12 @@ export async function POST(request: Request) {
     const selfieUrl = await uploadToS3(selfieBuffer, selfieFile.type);
     console.log('POST /api/guests - Uploaded selfie to S3:', selfieUrl);
     
-    // Resize selfie for Rekognition
-    const resizedBuffer = await resizeImageForRekognition(selfieBuffer);
-    console.log('POST /api/guests - Resized selfie for Rekognition');
+    // Resize selfie for recognition
+    const resizedBuffer = await resizeImageForRecognition(selfieBuffer);
+    console.log('POST /api/guests - Resized selfie for recognition');
     
-    // Index face in Rekognition using the resized image
-    console.log('POST /api/guests - Indexing face in Rekognition...');
+    // Index face using the resized image
+    console.log('POST /api/guests - Indexing face...');
     const faceId = await indexFaceInRekognition(resizedBuffer);
     console.log('POST /api/guests - Got face ID:', faceId);
     

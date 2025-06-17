@@ -8,7 +8,7 @@ import {
 } from '@/lib/dynamodb';
 import { searchFaces, searchFacesByImage } from '@/lib/aws';
 import { validate as isUUID } from 'uuid';
-import { resizeImageForRekognition } from '@/lib/image';
+import { resizeImageForRecognition } from '@/lib/image';
 
 export async function GET(request: Request) {
   try {
@@ -44,7 +44,7 @@ export async function GET(request: Request) {
     }
     console.log('Searching for matches with face ID:', guestFaceId);
 
-    // Search for faces using AWS Rekognition
+    // Search for faces using stored embeddings
     const matches = await searchFaces(guestFaceId);
     console.log('Found raw matches:', JSON.stringify(matches, null, 2));
 
@@ -165,9 +165,9 @@ export async function POST(request: Request) {
       return NextResponse.json([]);
     }
 
-    // Convert photo to buffer and resize for Rekognition
+    // Convert photo to buffer and resize for recognition
     const photoBuffer = Buffer.from(await photo.arrayBuffer());
-    const resizedBuffer = await resizeImageForRekognition(photoBuffer);
+    const resizedBuffer = await resizeImageForRecognition(photoBuffer);
 
     // Search for matching faces
     const matches = await searchFacesByImage(resizedBuffer);
